@@ -5,7 +5,8 @@ import {
   HttpTestingController,
 } from "@angular/common/http/testing";
 import { CUSTOM_ELEMENTS_SCHEMA } from "@angular/core";
-import { COURSES } from '../../../../server/db-data';
+import { COURSES } from "../../../../server/db-data";
+import { Course } from "../model/course";
 
 describe("CoursesService", () => {
   let coursesService: CoursesService;
@@ -29,7 +30,38 @@ describe("CoursesService", () => {
       expect(course).toBeTruthy("course item 12 not returned");
     });
     const testReq = httpTestingController.expectOne("/api/courses");
-    expect(testReq.request.method).toEqual("GET");
-    testReq.flush({payload:Object.values(COURSES)});
+    expect(testReq.request.method).toBe("GET");
+    testReq.flush({ payload: Object.values(COURSES) });
+  });
+  it("Should find a course by id", () => {
+    const id = 12;
+    coursesService.findCourseById(id).subscribe((course) => {
+      expect(course).toBeTruthy("No courses returned");
+      expect(course.id).toBe(id, "incorrect id");
+    });
+    const testReq = httpTestingController.expectOne("/api/courses/" + id);
+    expect(testReq.request.method).toBe("GET");
+    testReq.flush(COURSES[12]);
+  });
+
+  it("Should save the course data", () => {
+    const id = 12;
+    const changes: Partial<Course> = {
+      titles: { description: "Testing Course" },
+    };
+    coursesService.saveCourse(id, changes).subscribe((course) => {
+      expect(course).toBeTruthy("No course returned");
+      expect(course.id).toBe(id, "incorrect id");
+    });
+    const testReq = httpTestingController.expectOne("/api/courses/" + id);
+    expect(testReq.request.method).toBe("PUT");
+    expect(testReq.request.body.titles.description).toBe(
+      changes.titles.description
+    );
+    testReq.flush({...COURSES[12], titles:changes.titles});
+  });
+
+  afterEach(() => {
+    httpTestingController.verify();
   });
 });
