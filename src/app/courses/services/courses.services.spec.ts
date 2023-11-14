@@ -5,8 +5,9 @@ import {
   HttpTestingController,
 } from "@angular/common/http/testing";
 import { CUSTOM_ELEMENTS_SCHEMA } from "@angular/core";
-import { COURSES } from "../../../../server/db-data";
+import { COURSES, LESSONS } from "../../../../server/db-data";
 import { Course } from "../model/course";
+import { HttpErrorResponse } from "@angular/common/http";
 
 describe("CoursesService", () => {
   let coursesService: CoursesService;
@@ -58,9 +59,51 @@ describe("CoursesService", () => {
     expect(testReq.request.body.titles.description).toBe(
       changes.titles.description
     );
-    testReq.flush({...COURSES[12], titles:changes.titles});
+    testReq.flush({ ...COURSES[12], titles: changes.titles });
   });
 
+  it("should give an error if save course fails", () => {
+    const id = 12;
+    const changes: Partial<Course> = {
+      titles: { description: "Testing Course" },
+    };
+    coursesService.saveCourse(id, changes).subscribe(
+      () => fail("the save course operation should have failed"),
+      (error: HttpErrorResponse) => {
+        expect(error.status).toBe(500);
+      }
+    );
+
+    const testReq = httpTestingController.expectOne("/api/courses/" + id);
+    expect(testReq.request.method).toBe("PUT");
+    testReq.flush("Save course fail", {
+      status: 500,
+      statusText: "Internal Server Error",
+    });
+  });
+  it("should find lesson in the course data", () => {
+    const params = {
+      courseId: 12,
+      filter: "",
+      sortOrder: "asc",
+      pageNumber: 0,
+      pageSize: 3,
+    };
+
+    const lessons = Object.values(LESSONS).filter(
+      (lesson) => lesson.courseId === 12
+    );
+    coursesService.findLessons(params.courseId).subscribe((lessons) => {
+      expect(lessons).toBeTruthy();
+      expect(lessons.length).toBe(lessons.length);
+    });
+
+    const testReq = httpTestingController.expectOne(
+      "/api/lessons?courseId=12&filter=&sortOrder=asc&pageNumber=0&pageSize=3"
+    );
+    expect(testReq.request.method).toBe("GET");
+    testReq.flush(lessons);
+  });
   afterEach(() => {
     httpTestingController.verify();
   });
