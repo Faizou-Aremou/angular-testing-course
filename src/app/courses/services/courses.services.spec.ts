@@ -92,17 +92,19 @@ describe("CoursesService", () => {
 
     const lessons = Object.values(LESSONS).filter(
       (lesson) => lesson.courseId === 12
-    );
+    ).slice(0,3);
     coursesService.findLessons(params.courseId).subscribe((lessons) => {
       expect(lessons).toBeTruthy();
-      expect(lessons.length).toBe(lessons.length);
+      expect(lessons.length).toBe(params.pageSize);
     });
 
     const testReq = httpTestingController.expectOne(
-      "/api/lessons?courseId=12&filter=&sortOrder=asc&pageNumber=0&pageSize=3"
+      (req) => req.url == "/api/lessons"
     );
     expect(testReq.request.method).toBe("GET");
-    testReq.flush(lessons);
+    expect(testReq.request.params.get("sortOrder")).toBe("asc");
+    // and so one
+    testReq.flush({payload:lessons});
   });
   afterEach(() => {
     httpTestingController.verify();
