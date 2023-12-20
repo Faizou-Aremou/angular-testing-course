@@ -23,22 +23,28 @@ import { of } from "rxjs";
 import { NoopAnimationsModule } from "@angular/platform-browser/animations";
 import { click } from "../common/test-utils";
 
+const BEGINNER_COURSES = of(setupCourses().filter((course) => course.category === "BEGINNER"))
+const ADVANCED_COURSES = of(setupCourses().filter((course) => course.category === "ADVANCED"))
 describe("HomeComponent", () => {
   let fixture: ComponentFixture<HomeComponent>;
   let component: HomeComponent;
   let debugElement: DebugElement;
-
+  let courseService: CoursesService;
+  let courseServiceSpy: any;
   beforeEach(async(() => {
-    const courseServiceSpy = jasmine.createSpyObj('CoursesService', ['findAllCourses'])
+    courseServiceSpy = jasmine.createSpyObj("CoursesService", [
+      "findAllCourses",
+    ]);
     TestBed.configureTestingModule({
       imports: [CoursesModule, NoopAnimationsModule],
-      providers:[{provide:CoursesService, useValue: courseServiceSpy}]
+      providers: [{ provide: CoursesService, useValue: courseServiceSpy }],
     })
       .compileComponents()
       .then(() => {
         fixture = TestBed.createComponent(HomeComponent);
         component = fixture.componentInstance;
         debugElement = fixture.debugElement;
+        courseService = TestBed.inject(CoursesService);
       });
   }));
 
@@ -47,7 +53,12 @@ describe("HomeComponent", () => {
   });
 
   it("should display only beginner courses", () => {
-    pending();
+    courseServiceSpy.findAllCourses.and.returnValue(
+      BEGINNER_COURSES
+    );
+    fixture.detectChanges();
+    const tabs = debugElement.queryAll(By.css('.mdc-tab__text-label'));
+    expect(tabs.length).toBe(1,'unexpected number of tabs')
   });
 
   it("should display only advanced courses", () => {
