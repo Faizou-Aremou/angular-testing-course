@@ -19,12 +19,18 @@ import { HttpClient } from "@angular/common/http";
 import { COURSES } from "../../../../server/db-data";
 import { setupCourses } from "../common/setup-test-data";
 import { By } from "@angular/platform-browser";
-import { of } from "rxjs";
+import { combineLatest, of } from "rxjs";
 import { NoopAnimationsModule } from "@angular/platform-browser/animations";
 import { click } from "../common/test-utils";
+import { map } from "rxjs/operators";
+import { doesNotReject } from "assert";
 
-const BEGINNER_COURSES = of(setupCourses().filter((course) => course.category === "BEGINNER"))
-const ADVANCED_COURSES = of(setupCourses().filter((course) => course.category === "ADVANCED"))
+const BEGINNER_COURSES = of(
+  setupCourses().filter((course) => course.category === "BEGINNER")
+);
+const ADVANCED_COURSES = of(
+  setupCourses().filter((course) => course.category === "ADVANCED")
+);
 describe("HomeComponent", () => {
   let fixture: ComponentFixture<HomeComponent>;
   let component: HomeComponent;
@@ -53,23 +59,41 @@ describe("HomeComponent", () => {
   });
 
   it("should display only beginner courses", () => {
-    courseServiceSpy.findAllCourses.and.returnValue(
-      BEGINNER_COURSES
-    );
+    courseServiceSpy.findAllCourses.and.returnValue(BEGINNER_COURSES);
     fixture.detectChanges();
-    const tabs = debugElement.queryAll(By.css('.mdc-tab__text-label'));
-    expect(tabs.length).toBe(1,'unexpected number of tabs')
+    const tabs = debugElement.queryAll(By.css(".mdc-tab__text-label"));
+    expect(tabs.length).toBe(1, "unexpected number of tabs");
   });
 
   it("should display only advanced courses", () => {
-    pending();
+    courseServiceSpy.findAllCourses.and.returnValue(ADVANCED_COURSES);
+    fixture.detectChanges();
+    const tabs = debugElement.queryAll(By.css(".mdc-tab__text-label"));
+    expect(tabs.length).toBe(1, "unexpected number of tabs");
   });
 
   it("should display both tabs", () => {
-    pending();
+    courseServiceSpy.findAllCourses.and.returnValue(of(setupCourses()));
+    fixture.detectChanges();
+    const tabs = debugElement.queryAll(By.css(".mdc-tab__text-label"));
+    expect(tabs.length).toBe(2, "unexpected number of tabs");
   });
 
-  it("should display advanced courses when tab clicked", () => {
-    pending();
+  it("should display advanced courses when tab clicked", (done) => {
+    courseServiceSpy.findAllCourses.and.returnValue(of(setupCourses()));
+    fixture.detectChanges();
+    const advancedTabs = debugElement.queryAll(By.css(".mdc-tab__text-label"));
+    advancedTabs[1].nativeElement.click();
+    fixture.detectChanges();
+    fixture.whenStable().then(() => {
+      const advancedTabHeaders = debugElement.queryAll(
+        By.css(".mat-mdc-tab-body-active .mat-mdc-card-header")
+      );
+      expect(advancedTabHeaders.length).toBeGreaterThan(0);
+      expect(advancedTabHeaders[0].nativeElement.textContent).toContain(
+        "Angular Security Course"
+      );
+      done();
+    });
   });
 });
