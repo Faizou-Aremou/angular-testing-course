@@ -5,6 +5,7 @@ import {
   flush,
   flushMicrotasks,
   TestBed,
+  waitForAsync,
 } from "@angular/core/testing";
 import { CoursesModule } from "../courses.module";
 import { DebugElement } from "@angular/core";
@@ -79,21 +80,20 @@ describe("HomeComponent", () => {
     expect(tabs.length).toBe(2, "unexpected number of tabs");
   });
 
-  it("should display advanced courses when tab clicked", (done) => {
+  it("should display advanced courses when tab clicked", fakeAsync(() => {
     courseServiceSpy.findAllCourses.and.returnValue(of(setupCourses()));
     fixture.detectChanges();
     const advancedTabs = debugElement.queryAll(By.css(".mdc-tab__text-label"));
     advancedTabs[1].nativeElement.click();
     fixture.detectChanges();
-    fixture.whenStable().then(() => {
-      const advancedTabHeaders = debugElement.queryAll(
-        By.css(".mat-mdc-tab-body-active .mat-mdc-card-header")
-      );
-      expect(advancedTabHeaders.length).toBeGreaterThan(0);
-      expect(advancedTabHeaders[0].nativeElement.textContent).toContain(
-        "Angular Security Course"
-      );
-      done();
-    });
-  });
+    flush();
+    const advancedTabHeaders = debugElement.queryAll(
+      By.css(".mat-mdc-tab-body-active .mat-mdc-card-header")
+    );
+
+    expect(advancedTabHeaders.length).toBeGreaterThan(0);
+    expect(advancedTabHeaders[0].nativeElement.textContent).toContain(
+      "Angular Security Course"
+    );
+  }));
 });

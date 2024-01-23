@@ -1,6 +1,8 @@
-import { fakeAsync, flush, flushMicrotasks } from "@angular/core/testing";
+import { fakeAsync, flush, flushMicrotasks, tick } from "@angular/core/testing";
+import { of } from "rxjs";
+import { delay } from 'rxjs/operators';
 
-describe("Describe async test example", () => {
+xdescribe("Describe async test example", () => {
   it("Asynchronous test example", (done) => {
     let test = false;
     setTimeout(() => {
@@ -21,7 +23,7 @@ describe("Describe async test example", () => {
     flush();
     expect(test).toBeTruthy();
   }));
-  fit("Asynchronous test example- plain example", fakeAsync(() => {
+  it("Asynchronous test example- plain example", fakeAsync(() => {
     let test = false;
     console.log("creating promise");
     Promise.resolve().then(() => {
@@ -33,6 +35,34 @@ describe("Describe async test example", () => {
     });
     flushMicrotasks();
     console.log("Running test assertions");
+    expect(test).toBeTruthy();
+  }));
+  it("Asynchronous test example - Promise + setTimeout()", fakeAsync(() => {
+    let counter = 0;
+    Promise.resolve().then(() => {
+      counter += 10;
+      setTimeout(() => {
+        counter += 1;
+      }, 1000);
+    });
+    expect(counter).toBe(0);
+    flushMicrotasks();
+    expect(counter).toBe(10);
+    tick(500);
+    expect(counter).toBe(10);
+    tick(500);
+    expect(counter).toBe(11);
+  }));
+
+  it("test observables", fakeAsync(() => {
+    let test = false;
+    console.log("creating observable");
+    const test$ = of(test).pipe(delay(1000));
+    test$.subscribe(() => {
+      test = true;
+    });
+    console.log("running test assertions");
+    tick(1000);
     expect(test).toBeTruthy();
   }));
 });
